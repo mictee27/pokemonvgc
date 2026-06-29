@@ -1,0 +1,143 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Page */
+  --bg:             #EDEEF4;
+  --surface:        #FFFFFF;
+  --surface-raised: #FFFFFF;
+  --surface-hover:  #F5F6FA;
+
+  /* Text */
+  --text:           #0F172A;
+  --text-muted:     #64748B;
+  --text-subtle:    #94A3B8;
+
+  /* Borders */
+  --border-color:   #E2E8F0;
+  --border-strong:  #CBD5E1;
+
+  /* Accent — Pokémon blue */
+  --accent:         #3B4CCA;
+  --accent-hover:   #2D3BA0;
+  --accent-muted:   #EEF0FB;
+  --accent-text:    #1E2875;
+
+  /* Success — VGC green */
+  --success:        #639922;
+  --success-muted:  #EAF3DE;
+  --success-text:   #27500A;
+  --success-border: #C0DD97;
+
+  /* Error */
+  --error:          #DC2626;
+  --error-muted:    #FEF2F2;
+  --error-text:     #991B1B;
+  --error-border:   #FECACA;
+
+  /* Mega/amber */
+  --mega:           #D97706;
+  --mega-muted:     #FFFBEB;
+  --mega-border:    #FCD34D;
+  --mega-text:      #78350F;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+  --shadow-md:  0 4px 12px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
+  --shadow-lg:  0 8px 24px rgba(15,23,42,0.10), 0 4px 8px rgba(15,23,42,0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:             #0B1120;
+    --surface:        #1E293B;
+    --surface-raised: #243044;
+    --surface-hover:  #2D3A52;
+
+    --text:           #F1F5F9;
+    --text-muted:     #94A3B8;
+    --text-subtle:    #64748B;
+
+    --border-color:   #334155;
+    --border-strong:  #475569;
+
+    --accent:         #6172F0;
+    --accent-hover:   #7280F2;
+    --accent-muted:   #1A2049;
+    --accent-text:    #A5B0F8;
+
+    --success-muted:  #132209;
+    --success-text:   #86C940;
+    --success-border: #3A5714;
+
+    --error-muted:    #2D0A0A;
+    --error-text:     #F87171;
+    --error-border:   #7F1D1D;
+
+    --mega-muted:     #2A1800;
+    --mega-border:    #92400E;
+    --mega-text:      #FCD34D;
+
+    --shadow-sm:  0 1px 3px rgba(0,0,0,0.35);
+    --shadow-md:  0 4px 12px rgba(0,0,0,0.45);
+    --shadow-lg:  0 8px 24px rgba(0,0,0,0.55);
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+input, select, button { font-family: inherit; }
+
+input:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,76,202,0.15);
+  border-color: var(--accent) !important;
+}
+
+button:active { transform: scale(0.97); }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Responsive layout */
+.player-grid   { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+.team-row      { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.detail-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.nav-reg-label { font-size: 11px; color: #94A3B8; padding: 12px 0; margin-left: auto; letter-spacing: 0.02em; }
+.header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 680px) {
+  .player-grid    { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .team-row       { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+  .detail-fields  { grid-template-columns: 1fr !important; }
+  .nav-reg-label  { display: none !important; }
+  .header-actions button { font-size: 11px !important; padding: 5px 10px !important; }
+}
+
+/* Print */
+@media print {
+  nav, button { display: none !important; }
+  body { background: white !important; color: black !important; font-size: 10pt; }
+  .no-print   { display: none !important; }
+  .print-only { display: block !important; }
+  table.print-only { display: table !important; }
+  .print-slot { break-inside: avoid; }
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    background-color: transparent !important;
+    color: black !important;
+    border-color: #ccc !important;
+  }
+}
