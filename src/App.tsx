@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { SubmissionForm } from './views/SubmissionForm'
 import { OrganizerDashboard } from './views/OrganizerDashboard'
+import { MetaDashboard } from './views/MetaDashboard'
 import { PasswordGate } from './components/PasswordGate'
 import { loadDraft, defaultSubmission } from './utils/storage'
 import type { TeamSubmission } from './types'
@@ -10,7 +11,7 @@ function isOrgUnlocked() {
 }
 
 export default function App() {
-  const [view, setView] = useState<'player' | 'organizer'>('player')
+  const [view, setView] = useState<'player' | 'meta' | 'organizer'>('player')
   const [submission, setSubmission] = useState<TeamSubmission>(() => loadDraft() ?? defaultSubmission())
   const [orgUnlocked, setOrgUnlocked] = useState(isOrgUnlocked)
 
@@ -37,7 +38,11 @@ export default function App() {
         </div>
 
         {/* Tabs */}
-        {(['player', 'organizer'] as const).map(v => (
+        {([
+          ['player', 'My team list'],
+          ['meta', 'Meta'],
+          ['organizer', 'Organiser'],
+        ] as const).map(([v, label]) => (
           <button key={v} onClick={() => setView(v)} style={{
             padding: '0 4px',
             height: '49px',
@@ -52,7 +57,7 @@ export default function App() {
             letterSpacing: '0.01em',
             transition: 'color 0.15s',
           }}>
-            {v === 'player' ? 'My team list' : 'Organiser'}
+            {label}
           </button>
         ))}
 
@@ -66,6 +71,8 @@ export default function App() {
           submission={submission}
           onUpdate={setSubmission}
         />
+      ) : view === 'meta' ? (
+        <MetaDashboard />
       ) : orgUnlocked ? (
         <OrganizerDashboard />
       ) : (

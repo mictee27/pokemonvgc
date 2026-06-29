@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { TeamSubmission } from '../types'
 import { POKEMON_MAP, getSpriteUrl } from '../data/pokemon'
 import { loadEvent, saveEvent, defaultEvent } from '../utils/storage'
 import { apiFetchSubmissions, apiToggleFlag, apiUpdateEventTag } from '../lib/api'
+import { parseTdf } from '../utils/parseTdf'
+import { loadTournaments, saveTournament, deleteTournament } from '../utils/tournamentStorage'
+import type { TournamentRecord } from '../types/tournament'
 
 interface Props {
   onUnlock?: () => void
@@ -13,7 +16,7 @@ type StatusFilter = 'All' | 'Submitted' | 'Draft' | 'Flagged' | 'Not started'
 export function OrganizerDashboard({ onUnlock: _onUnlock }: Props) {
   const [event, setEvent] = useState(loadEvent())
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
-  const [tab, setTab] = useState<'submissions' | 'usage' | 'event'>('submissions')
+  const [tab, setTab] = useState<'submissions' | 'usage' | 'tournaments' | 'event'>('submissions')
   const [submissions, setSubmissions] = useState<TeamSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -84,14 +87,14 @@ export function OrganizerDashboard({ onUnlock: _onUnlock }: Props) {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '4px', marginBottom: '1.25rem', borderBottom: '0.5px solid var(--border-color)', paddingBottom: '0' }}>
-        {(['submissions', 'usage', 'event'] as const).map(t => (
+        {(['submissions', 'usage', 'tournaments', 'event'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '8px 16px', fontSize: '13px', fontWeight: tab === t ? 600 : 400,
             border: 'none', borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
             background: 'transparent', color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
             cursor: 'pointer', textTransform: 'capitalize', letterSpacing: '0.01em',
           }}>
-            {t === 'submissions' ? 'Submissions' : t === 'usage' ? 'Usage stats' : 'Event settings'}
+            {t === 'submissions' ? 'Submissions' : t === 'usage' ? 'Usage stats' : t === 'tournaments' ? 'TOM Data' : 'Event settings'}
           </button>
         ))}
       </div>
@@ -170,6 +173,10 @@ export function OrganizerDashboard({ onUnlock: _onUnlock }: Props) {
         </>
       )}
 
+      {tab === 'tournaments' && (
+        <TomUploadTab />
+      )}
+
       {tab === 'event' && (
         <div style={{ background: 'var(--surface-raised)', border: '0.5px solid var(--border-color)', borderRadius: '12px', padding: '1.25rem', maxWidth: '500px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -201,6 +208,144 @@ export function OrganizerDashboard({ onUnlock: _onUnlock }: Props) {
             </div>
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+function TomUploadTab() {
+  const [tournaments, setTournaments] = useState<TournamentRecord[]>(loadTournaments)
+  const [pending, setPending] = useState<TournamentRecord | null>(null)
+  const [eventTagDraft, setEventTagDraft] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleFile = (file: File) => {
+    setError(null); setSuccess(null); setPending(null)
+    const reader = new FileReader()
+    reader.onload = e => {
+      try {
+        const parsed = parseTdf(e.target?.result as string)
+        setEventTagDraft(parsed.name)
+        setPending(parsed)
+      } catch (err: any) {
+        setError(err.message ?? 'Failed to parse file')
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files[0]
+    if (file) handleFile(file)
+  }
+
+  const saveImport = () => {
+    if (!pending) return
+    const t = { ...pending, eventTag: eventTagDraft.trim() }
+    saveTournament(t)
+    setTournaments(loadTournaments())
+    setSuccess(`"${t.name}" imported successfully.`)
+    setPending(null)
+  }
+
+  const handleDelete = (id: string) => {
+    deleteTournament(id)
+    setTournaments(loadTournaments())
+  }
+
+  return (
+    <div style={{ maxWidth: '640px' }}>
+      <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: 1.6 }}>
+        Upload the <strong>FINAL .tdf file</strong> from TOM to publish tournament results and link Pokémon usage data to the public Meta dashboard.
+      </p>
+
+      {/* Drop zone */}
+      <div
+        onDrop={handleDrop}
+        onDragOver={e => e.preventDefault()}
+        onClick={() => fileRef.current?.click()}
+        style={{
+          border: '2px dashed var(--border-color)', borderRadius: '12px',
+          padding: '2rem', textAlign: 'center', cursor: 'pointer',
+          background: 'var(--surface)', marginBottom: '12px',
+          transition: 'border-color 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+        onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-color)')}
+      >
+        <div style={{ fontSize: '28px', marginBottom: '8px' }}>📂</div>
+        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>Drop a .tdf file here</div>
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>or click to browse · upload the _FINAL.tdf file</div>
+        <input ref={fileRef} type="file" accept=".tdf,.xml" style={{ display: 'none' }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+      </div>
+
+      {error && (
+        <div style={{ padding: '10px 14px', background: 'var(--error-muted)', color: 'var(--error-text)', borderRadius: '8px', fontSize: '13px', marginBottom: '12px' }}>
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div style={{ padding: '10px 14px', background: 'var(--success-muted)', color: 'var(--success-text)', borderRadius: '8px', fontSize: '13px', marginBottom: '12px' }}>
+          {success}
+        </div>
+      )}
+
+      {/* Pending preview */}
+      {pending && (
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--accent)', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '12px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>{pending.name}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+            {pending.city}, {pending.country} · {pending.date} · {pending.players.length} players · {pending.standings.length} standings
+          </div>
+          <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Event tag (must match team sheet tags)
+          </label>
+          <input
+            value={eventTagDraft}
+            onChange={e => setEventTagDraft(e.target.value)}
+            placeholder="e.g. Flinch League Cup May 2025"
+            style={{ width: '100%', padding: '7px 10px', fontSize: '13px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg)', color: 'var(--text)', boxSizing: 'border-box', marginBottom: '10px' }}
+          />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={saveImport} style={{
+              padding: '7px 18px', fontSize: '13px', fontWeight: 600,
+              background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer',
+            }}>Import tournament</button>
+            <button onClick={() => setPending(null)} style={{
+              padding: '7px 14px', fontSize: '13px',
+              background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer',
+            }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Imported list */}
+      {tournaments.length > 0 && (
+        <>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px', marginTop: '8px' }}>
+            Imported tournaments
+          </div>
+          {tournaments.map(t => (
+            <div key={t.id} style={{ background: 'var(--surface)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px 14px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{t.name}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                  {t.city} · {t.date} · {t.players.length} players
+                  {t.eventTag && <span style={{ marginLeft: '8px', color: 'var(--accent)' }}>tag: {t.eventTag}</span>}
+                </div>
+              </div>
+              <button onClick={() => handleDelete(t.id)} style={{
+                padding: '4px 10px', fontSize: '11px', border: '1px solid var(--border-color)',
+                borderRadius: '6px', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
+              }}>Remove</button>
+            </div>
+          ))}
+        </>
       )}
     </div>
   )

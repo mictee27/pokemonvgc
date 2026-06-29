@@ -156,7 +156,7 @@ export const LEGAL_MOVES: MoveData[] = [
   { id: 'spore', name: 'Spore', type: 'Grass' },
   { id: 'sleep-powder', name: 'Sleep Powder', type: 'Grass' },
   { id: 'clear-smog', name: 'Clear Smog', type: 'Poison' },
-  { id: 'hazu', name: 'Haze', type: 'Ice' },
+  { id: 'haze', name: 'Haze', type: 'Ice' },
   { id: 'taunt', name: 'Taunt', type: 'Dark' },
   { id: 'encore', name: 'Encore', type: 'Normal' },
   { id: 'helping-hand', name: 'Helping Hand', type: 'Normal' },
