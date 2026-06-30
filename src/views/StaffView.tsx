@@ -1,6 +1,6 @@
 import type { TeamSubmission } from '../types'
 import { POKEMON_MAP, getSpriteUrl } from '../data/pokemon'
-import { ITEM_M@P } from '../data/items'
+import { ITEM_MAP } from '../data/items'
 import { LEGAL_MOVES } from '../data/moves'
 import { TypeBadge } from '../components/TypeBadge'
 
