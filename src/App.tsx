@@ -10,10 +10,35 @@ function isOrgUnlocked() {
   return sessionStorage.getItem('organiser_auth') === '1'
 }
 
+function LandingPage() {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: '#000',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'system-ui, sans-serif',
+      color: '#fff',
+    }}>
+      <div style={{ fontSize: '28px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '12px' }}>
+        flinch
+      </div>
+      <div style={{ fontSize: '15px', color: '#888' }}>
+        Something's coming. Stay tuned.
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
+  const isLanding = !window.location.pathname.startsWith('/pokemonvgc')
   const [view, setView] = useState<'player' | 'meta' | 'organizer'>('player')
   const [submission, setSubmission] = useState<TeamSubmission>(() => loadDraft() ?? defaultSubmission())
   const [orgUnlocked, setOrgUnlocked] = useState(isOrgUnlocked)
+
+  if (isLanding) return <LandingPage />
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>

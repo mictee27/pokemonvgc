@@ -1,6 +1,5 @@
 {
   "rewrites": [
-    { "source": "/pokemonvgc(.*)", "destination": "/index.html" },
-    { "source": "/(.*)", "destination": "https://flinch-landing-3d789cd4.base44.app/$1" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
